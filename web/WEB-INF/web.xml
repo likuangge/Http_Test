@@ -7,9 +7,17 @@
         <servlet-name>fileQuery</servlet-name>
         <servlet-class>com.http.client.sendHttpRequest</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>fileUpload</servlet-name>
+        <servlet-class>com.http.client.FileUpload</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>fileQuery</servlet-name>
         <url-pattern>/queryDir</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>fileUpload</servlet-name>
+        <url-pattern>/fileupload</url-pattern>
     </servlet-mapping>
     <welcome-file-list>
         <welcome-file>index.jsp</welcome-file>

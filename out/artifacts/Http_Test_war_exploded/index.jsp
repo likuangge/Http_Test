@@ -9,12 +9,40 @@
 <html>
   <head>
     <title>HttpClient</title>
+    <style type="text/css">
+      a {
+        text-decoration: none;
+        color: black;
+        font-size: 18px;
+      }
+
+      h3 {
+        width: 180px;
+        height: 38px;
+        margin: 100px auto;
+        text-align: center;
+        line-height: 38px;
+        background: deepskyblue;
+        border-radius: 4px;
+      }
+    </style>
   </head>
   <body>
+    <div class="row clearfix">
+      <div class="col-md-12 column">
+        <div class="page-header">
+          <h1>
+            HTTP文件管理
+          </h1>
+        </div>
+      </div>
+    </div>
+    <br><br>
     <form action="queryDir" method="post">
-      Directory Name：<input type="text" name="dirname" />
-      <br />
-      <input type="submit" value="查询" />
+      Directory Name：<input type="text" name="dirname" /> <input type="submit" value="查询" />
+    </form>
+    <form action="fileupload" method="post">
+      Upload File：<input type="text" name="filename" /> <input type="submit" value="上传" />
     </form>
   </body>
 </html>

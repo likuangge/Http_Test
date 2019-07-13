@@ -1,5 +1,9 @@
 package com.http.client;
 
+import com.sun.beans.editors.ByteEditor;
+import net.sf.jmimemagic.Magic;
+import net.sf.jmimemagic.MagicMatch;
+
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -13,11 +17,10 @@ public class HttpClient {
     private StringBuffer sb = null;
     private String params = null;
     private Map<String, String> results;
-    private List<String> dirs;
     private String queryDir = null;
     private HttpURLConnection connection = null;
 
-    public Map<String, String> sendGet(String url, Map<String, Object> mapParams, String dir_name){
+    public Map<String, String> sendGet(String url, Map<String, Object> mapParams){
         params = getParams(mapParams);
         try {
             String httpUrl = url + "?" + params;
@@ -28,7 +31,7 @@ public class HttpClient {
             connection.setUseCaches(true);
             httpConnect(connection);
 
-            getResponse(connection, dir_name);
+            getResponse(connection);
         } catch (Exception e){
             e.printStackTrace();
         } finally {
@@ -44,7 +47,7 @@ public class HttpClient {
         return results;
     }
 
-    /*public void sendPost(String url, Map<String, Object> mapParams){
+    /*public void sendPost(String httpUrl){
         params = getParams(mapParams);
         try {
             URL httpUrl = new URL(url);
@@ -53,6 +56,15 @@ public class HttpClient {
             connection.setDoOutput(true);
             connection.setUseCaches(false);
             httpConnect(connection);
+            URL url = new URL(httpUrl);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.setUseCaches(false);
+            connection.setRequestProperty("connection", "Keep-Alive");
+            connection.setRequestProperty("Charsert", "UTF-8");
+            connection.connect();
 
             pw = new PrintWriter(connection.getOutputStream());
             pw.write(params);
@@ -61,8 +73,70 @@ public class HttpClient {
             getResponse(connection);
         } catch (Exception e){
             e.printStackTrace();
+        } finally {
+            try{
+                if(br != null){
+                    br.close();
+                }
+                if(pw != null){
+                    pw.close();
+                }
+                connection.disconnect();
+            } catch (Exception e){
+                e.printStackTrace();
+            }
         }
     }*/
+
+    public void fileUpload(String httpUrl, String file_name){
+        final String newLine = "\r\n";
+        final String boundaryPrefix = "==";
+
+        String BOUNDARY = "========7d4a6d158c9";
+        try {
+            URL url = new URL(httpUrl);
+            connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setDoOutput(true);
+            connection.setDoInput(true);
+            connection.setUseCaches(false);
+            connection.setRequestProperty("connection", "Keep-Alive");
+            connection.setRequestProperty("Charsert", "UTF-8");
+            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + BOUNDARY);
+            connection.connect();
+
+            OutputStream out = new DataOutputStream(connection.getOutputStream());
+            File file = new File(file_name);
+            System.out.println(file.getName());
+            sb = new StringBuffer();
+            sb.append(boundaryPrefix);
+            sb.append(BOUNDARY);
+            sb.append(newLine);
+            sb.append("Content-Disposition: form-data;name=\"photo\";filename=\"" + file_name + "\"" + newLine);
+            sb.append("Content-Type:application/octet-stream");
+            sb.append(newLine);
+            sb.append(newLine);
+            out.write(sb.toString().getBytes());
+
+            DataInputStream in = new DataInputStream(new FileInputStream(file));
+            byte[] bufferOut = new byte[1024];
+            int bytes = 0;
+            while((bytes = in.read(bufferOut)) != -1){
+                out.write(bufferOut, 0, bytes);
+            }
+            out.write(newLine.getBytes());
+            in.close();
+            byte[] endData = (newLine + boundaryPrefix + BOUNDARY + boundaryPrefix + newLine).getBytes();
+            out.write(endData);
+            out.flush();
+            out.close();
+            getResponse(connection);
+        } catch (Exception e){
+            e.printStackTrace();
+        } finally {
+            connection.disconnect();
+        }
+    }
 
     public String getParams(Map<String, Object> mapParams){
         sb = new StringBuffer();
@@ -100,24 +174,11 @@ public class HttpClient {
             connection.connect();
         } catch (IOException e){
             e.printStackTrace();
-        } /*finally {
-            try{
-                if(pw != null){
-                    pw.close();
-                }
-                if(br != null){
-                    br.close();
-                }
-                connection.disconnect();
-            } catch (Exception e){
-                e.printStackTrace();
-            }
-        }*/
+        }
     }
 
-    public void getResponse(HttpURLConnection connection, String name){
+    public void getResponse(HttpURLConnection connection){
         results = new HashMap<String, String>();
-        dirs = new ArrayList<String>();
         try {
             int code = connection.getResponseCode();
             if (code == 200) {
@@ -134,21 +195,10 @@ public class HttpClient {
                     }else if(type[1].equals("dir")){
                         String[] dir_name = content[1].split("=");
                         System.out.println("Type: " + type[1] + "; Dir_Name: " + dir_name[1]);
-                        if(dir_name[1].equals(name)){
-                            dirs.add(dir_name[1]);
-                        } else{
-                            dirs.add(name + "\\" + dir_name[1]);
-                        }
                     } else{
                         String[] file_name = content[1].split("=");
                         String[] file_parent = content[2].split("=");
                         System.out.println("File_Name: " + file_name[1] + "; Parent_Dir_Name: " + file_parent[1]);
-                        /*String[] parent = file_parent[1].split(File.separator);
-                        if(parent[parent.length - 1].equals(name)){
-                            results.put(file_name[1], parent[parent.length - 1]);
-                        } else {
-                            results.put(file_name[1], name + "\\" + parent[parent.length - 1]);
-                        }*/
                         results.put(file_name[1], file_parent[1]);
                     }
                     result += line;
@@ -162,10 +212,6 @@ public class HttpClient {
 
     public String getQueryDir(){
         return this.queryDir;
-    }
-
-    public List<String> getDirs(){
-        return dirs;
     }
 
 }

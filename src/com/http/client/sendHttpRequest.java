@@ -7,7 +7,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 @WebServlet("/fileQuery")
@@ -30,11 +29,9 @@ public class sendHttpRequest extends HttpServlet {
         Map<String, Object> mapParams = new HashMap<String, Object>();
         mapParams.put("id", "1");
         mapParams.put("dir_name", dir_name);
-        result = client.sendGet("http://127.0.0.1:8888", mapParams, dir_name);
+        result = client.sendGet("http://127.0.0.1:8888", mapParams);
         String queryDir = client.getQueryDir();
-        List<String> dirs = client.getDirs();
         request.setAttribute("input_dir", dir_name);
-        request.setAttribute("dirs", dirs);
         request.setAttribute("queryDir", queryDir);
         request.setAttribute("resultMap" , result);
         request.getRequestDispatcher("/FileList.jsp").forward(request, response);
